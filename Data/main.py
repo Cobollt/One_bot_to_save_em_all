@@ -64,7 +64,7 @@ phone [name]                             - show phone numbers
 all                                      - show all contacts
 add-birthday [name] [DD.MM.YYYY]         - add birthday
 show-birthday [name]                     - show birthday
-birthdays                                - upcoming birthdays (7 days)
+birthdays [days]                         - upcoming birthdays (default: 7 days)
 add-email [name] [email]                 - add or update email
 change-email [name] [email]              - alias for add-email
 add-address [name] [address]             - add or update address
@@ -174,10 +174,21 @@ def show_birthday(args, book):
 
 
 @input_error
-def birthdays(book):
+def birthdays(args, book):
+    if args:
+        try:
+            days = int(args[0])
+            if days < 1:
+                return "Please enter a positive number of days."
+        except ValueError:
+            return "Invalid number of days. Usage: birthdays [days]"
+    else:
+        days = 7
     result = []
-    for record in book.upcoming_birthdays():
+    for record in book.upcoming_birthdays(days=days):
         result.append(str(record))
+    if not result:
+        return f"No birthdays in the next {days} day(s)."
     return "\n".join(result)
 
 @input_error
@@ -269,7 +280,7 @@ def main():
         "all": lambda command_args: show_all(book),
         "add-birthday": lambda command_args: add_birthday(command_args, book),
         "show-birthday": lambda command_args: show_birthday(command_args, book),
-        "birthdays": lambda command_args: birthdays(book),
+        "birthdays": lambda command_args: birthdays(command_args, book),
         "add-email": lambda command_args: add_email(command_args, book),
         "change-email": lambda command_args: add_email(command_args, book),
         "change-address": lambda command_args: add_address(command_args, book),
