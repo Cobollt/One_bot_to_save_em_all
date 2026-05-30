@@ -101,7 +101,7 @@ class Record:
         phones = '; '.join(p.value for p in self.phones) if self.phones else "none"
         return (
             f"Contact name: {self.name.value}, "
-            f"phones: {'; '.join(p.value for p in self.phones)}, "
+            f"phones: {phones}, "
             f"birthday: {birthday}"
             f"email: {email}, "
             f"address: {address}"
