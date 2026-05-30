@@ -102,7 +102,7 @@ class Record:
         return (
             f"Contact name: {self.name.value}, "
             f"phones: {phones}, "
-            f"birthday: {birthday}"
+            f"birthday: {birthday}, "
             f"email: {email}, "
             f"address: {address}"
         )
