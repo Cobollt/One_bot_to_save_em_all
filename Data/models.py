@@ -134,6 +134,26 @@ class AddressBook(UserDict):
                     birthdays.append(record)
         return birthdays
 
+    def search(self, query):
+        query = query.lower()
+        results = []
+        for record in self.data.values():
+            if query in record.name.value.lower():
+                results.append(record)
+                continue
+
+            if any(query in p.value for p in record.phones):
+                results.append(record)
+                continue
+
+            if record.email and query in record.email.value.lower():
+                results.append(record)
+                continue
+            if record.address and query in record.address.value.lower():
+                results.append(record)
+                continue
+        return results
+
 
 class NoteBook(UserDict):
     def add_note(self, title, text):
@@ -156,23 +176,3 @@ class NoteBook(UserDict):
 
     def all_notes(self):
         return list(self.data.values())
-
-    def search(self, query):
-        query = query.lower()
-        results = []
-        for record in self.data.values():
-            if query in record.name.value.lower():
-                results.append(record)
-                continue
-
-            if any(query in p.value for p in record.phones):
-                results.append(record)
-                continue
-
-            if record.email and query in record.email.value.lower():
-                results.append(record)
-                continue
-            if record.address and query in record.address.value.lower():
-                results.append(record)
-                continue
-        return results
