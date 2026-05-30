@@ -1,16 +1,22 @@
 from pathlib import Path
 import pickle
-from .models import Record, AddressBook
+from .models import Record, AddressBook, NoteBook
 
 
 DATA_DIR = Path("SaveData")
 DATA_DIR.mkdir(exist_ok=True)
 DATA_FILE = DATA_DIR / "addressbook.pkl"
+NOTES_FILE = DATA_DIR / "notebook.pkl"
 
 
 def save_data(book, filename=DATA_FILE):
     with open(filename, "wb") as file:
         pickle.dump(book, file)
+
+
+def save_notes(notes, filename=NOTES_FILE):
+    with open(filename, "wb") as file:
+        pickle.dump(notes, file)
 
 
 def load_data(filename=DATA_FILE):
@@ -19,6 +25,14 @@ def load_data(filename=DATA_FILE):
             return pickle.load(file)
     except FileNotFoundError:
         return AddressBook()
+
+
+def load_notes(filename=NOTES_FILE):
+    try:
+        with open(filename, "rb") as file:
+            return pickle.load(file)
+    except FileNotFoundError:
+        return NoteBook()
 
 
 def parse_input(user_input):
@@ -39,8 +53,14 @@ def input_error(func):
                     return "Invalid Name."
                 if func.__name__ == "add_birthday":
                     return "Give me name and birthday please."
+                if func.__name__ == "add_email":
+                    return "Give me name and email please."
+                if func.__name__ == "add_address":
+                    return "Give me name and address please."
             return str(e)
         except KeyError:
+            if "note" in func.__name__:
+                return "Note not found."
             return "No contact."
         except IndexError:
             return "Enter a name."
@@ -116,9 +136,87 @@ def birthdays(book):
         result.append(str(record))
     return "\n".join(result)
 
+@input_error
+def add_email(args, book):
+    name, email = args
+    record = book.find(name)
+    if record is None:
+        return "No contact found."
+    record.add_email(email)
+    return "Email added/updated."
+
+@input_error
+def add_address(args, book):
+    name, *address_parts = args
+    address = " ".join(address_parts)
+    record = book.find(name)
+    if record is None:
+        return "No contact found."
+    record.add_address(address)
+    return "Address added/updated"
+
+@input_error
+def search_contact(args, book):
+    if not args:
+        return "Please provide a search query. "
+    query = args[0]
+    results = book.search(query)
+    if not results:
+        return "No matches found."
+    return "\n---\n".join(str(record) for record in results)
+
+@input_error
+def delete_contact(args, book):
+    name = args [0]
+    if book.find(name):
+        book.delete(name)
+        return f"Contact {name} deleted."
+    return "No contact found."
+
+
+@input_error
+def add_note(args, notebook):
+    title, *text_parts = args
+    text = " ".join(text_parts)
+    notebook.add_note(title, text)
+    return "Note added."
+
+
+@input_error
+def find_note(args, notebook):
+    query = " ".join(args)
+    notes = notebook.find_note(query)
+    if not notes:
+        return "No note found."
+    return "\n".join(str(note) for note in notes)
+
+
+@input_error
+def edit_note(args, notebook):
+    title, *text_parts = args
+    new_text = " ".join(text_parts)
+    notebook.edit_note(title, new_text)
+    return "Note edited."
+
+
+@input_error
+def delete_note(args, notebook):
+    title = args[0]
+    notebook.delete_note(title)
+    return "Note deleted."
+
+
+@input_error
+def show_all_notes(notebook):
+    notes = notebook.all_notes()
+    if not notes:
+        return "Notebook is empty."
+    return "\n".join(str(note) for note in notes)
+
 
 def main():
     book = load_data()
+    notebook = load_notes()
     commands = {
         "hello": lambda command_args: "How can I help you?",
         "add": lambda command_args: add_contact(command_args, book),
@@ -128,6 +226,17 @@ def main():
         "add-birthday": lambda command_args: add_birthday(command_args, book),
         "show-birthday": lambda command_args: show_birthday(command_args, book),
         "birthdays": lambda command_args: birthdays(book),
+        "add-email": lambda command_args: add_email(command_args, book),
+        "change-email": lambda command_args: add_email(command_args, book),
+        "change-address": lambda command_args: add_address(command_args, book),
+        "add-address": lambda command_args: add_address(command_args, book),
+        "search": lambda command_args: search_contact(command_args, book),
+        "delete": lambda command_args: delete_contact(command_args, book),
+        "add-note": lambda command_args: add_note(command_args, notebook),
+        "find-note": lambda command_args: find_note(command_args, notebook),
+        "edit-note": lambda command_args: edit_note(command_args, notebook),
+        "delete-note": lambda command_args: delete_note(command_args, notebook),
+        "all-notes": lambda command_args: show_all_notes(notebook),
     }
     print("Welcome to the assistant bot!")
     while True:
@@ -138,6 +247,7 @@ def main():
         command, *args = parse_input(user_input)
         if command in ["close", "exit"]:
             save_data(book)
+            save_notes(notebook)
             print("Good bye!")
             break
         handler = commands.get(command)
