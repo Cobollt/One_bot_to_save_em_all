@@ -1,3 +1,4 @@
+import re
 from collections import UserDict
 from datetime import datetime
 
@@ -30,11 +31,25 @@ class Birthday(Field):
             raise ValueError("Invalid date format. Use DD.MM.YYYY")
 
 
+class Email(Field):
+    def __init__(self, value):
+        pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+        if not re.match(pattern, value):
+            raise ValueError("Invalid email format.")
+        super().__init__(value)
+
+
+class Address(Field):
+    pass
+
+
 class Record:
     def __init__(self, name):
         self.name = Name(name)
         self.phones = []
         self.birthday = None
+        self.email = None
+        self.address = None
 
     def add_phone(self, phone) -> None:
         self.phones.append(Phone(phone))
@@ -61,12 +76,24 @@ class Record:
     def find_birthday(self):
         return self.birthday
 
+    def add_email(self, email):
+        self.email = Email(email)
+
+    def add_address(self, address):
+        self.address = Address(address)
+
     def __str__(self):
         birthday = self.birthday.value if self.birthday else "not added"
+        email = self.email.value if self.email else "not added"
+        address = self.address.value if self.address else "not added"
+        phones = '; '.join(p.value for p in self.phones) if self.phones else "none"
         return (
             f"Contact name: {self.name.value}, "
             f"phones: {'; '.join(p.value for p in self.phones)}, "
-            f"birthday: {birthday}")
+            f"birthday: {birthday}"
+            f"email: {email}, "
+            f"address: {address}"
+        )
 
 
 class AddressBook(UserDict):
@@ -94,3 +121,23 @@ class AddressBook(UserDict):
                 if (next_birthday - today).days <= 7:
                     birthdays.append(record)
         return birthdays
+
+    def search(self, query):
+        query = query.lower()
+        results = []
+        for record in self.data.values():
+            if query in record.name.value.lower():
+                results.append(record)
+                continue
+
+            if any(query in p.value for p in record.phones):
+                results.append(record)
+                continue
+
+            if record.email and query in record.email.value.lower():
+                results.append(record)
+                continue
+            if record.address and query in record.address.value.lower():
+                results.append(record)
+                continue
+        return results
