@@ -31,6 +31,18 @@ class Birthday(Field):
             raise ValueError("Invalid date format. Use DD.MM.YYYY")
 
 
+class Note:
+    def __init__(self, title, text):
+        self.title = title
+        self.text = text
+
+    def edit(self, new_text):
+        self.text = new_text
+
+    def __str__(self):
+        return f"{self.title}: {self.text}"
+
+
 class Email(Field):
     def __init__(self, value):
         pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
@@ -121,6 +133,29 @@ class AddressBook(UserDict):
                 if (next_birthday - today).days <= 7:
                     birthdays.append(record)
         return birthdays
+
+
+class NoteBook(UserDict):
+    def add_note(self, title, text):
+        self.data[title] = Note(title, text)
+
+    def find_note(self, query):
+        query = query.lower()
+        return [note for note in self.data.values()
+                if query in note.title.lower() or query in note.text.lower()]
+
+    def edit_note(self, title, new_text):
+         if title not in self.data:
+             raise KeyError
+         self.data[title].edit(new_text)
+
+    def delete_note(self, title):
+        if title not in self.data:
+            raise KeyError
+        del self.data[title]
+
+    def all_notes(self):
+        return list(self.data.values())
 
     def search(self, query):
         query = query.lower()
