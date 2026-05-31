@@ -1,6 +1,14 @@
 from pathlib import Path
 import pickle
-from .models import Record, AddressBook, NoteBook
+from models import Record, AddressBook, NoteBook
+
+
+# Colors
+RED = "\033[91m"
+GREEN = "\033[92m"
+GRAY = "\033[90m"
+BLUE = "\033[94m"
+RESET = "\033[0m"
 
 
 DATA_DIR = Path("SaveData")
@@ -35,11 +43,45 @@ def load_notes(filename=NOTES_FILE):
         return NoteBook()
 
 
+# ── Parser ───────────────────────────────────────────────────────────────────
+
 def parse_input(user_input):
     cmd, *args = user_input.split()
     cmd = cmd.strip().lower()
     return cmd, *args
 
+
+# ── Help ─────────────────────────────────────────────────────────────────────
+
+def show_help():
+    return f"""
+{GRAY}----------
+Available commands:
+hello                                    - greeting
+add [name] [phone]                       - add contact or phone
+change [name] [old] [new]                - change phone
+phone [name]                             - show phone numbers
+all                                      - show all contacts
+add-birthday [name] [DD.MM.YYYY]         - add birthday
+show-birthday [name]                     - show birthday
+birthdays [days]                         - upcoming birthdays (default: 7 days)
+add-email [name] [email]                 - add or update email
+change-email [name] [email]              - alias for add-email
+add-address [name] [address]             - add or update address
+change-address [name] [address]          - alias for add-address
+search [query]                           - search contacts
+delete [name]                            - delete contact
+add-note [title] [text]                  - add a note
+find-note [query]                        - find notes by query
+edit-note [title] [new text]             - edit an existing note
+delete-note [title]                      - delete a note
+all-notes                                - show all notes
+close or exit                            - exit the program
+----------{RESET}
+"""
+
+
+# ── Decorator ────────────────────────────────────────────────────────────────
 
 def input_error(func):
     def inner(*args, **kwargs):
@@ -66,6 +108,8 @@ def input_error(func):
             return "Enter a name."
     return inner
 
+
+# ── Command handlers ──────────────────────────────────────────────────────────
 
 @input_error
 def add_contact(args, book):
@@ -253,11 +297,59 @@ def show_all_notes(notebook):
 
 
 @input_error
-def birthdays(book):
+def birthdays(args, book):
+    if args:
+        try:
+            days = int(args[0])
+            if days < 1:
+                return "Please enter a positive number of days."
+        except ValueError:
+            return "Invalid number of days. Usage: birthdays [days]"
+    else:
+        days = 7
     result = []
-    for record in book.upcoming_birthdays():
+    for record in book.upcoming_birthdays(days=days):
         result.append(str(record))
+    if not result:
+        return f"No birthdays in the next {days} day(s)."
     return "\n".join(result)
+
+@input_error
+def add_email(args, book):
+    name, email = args
+    record = book.find(name)
+    if record is None:
+        return "No contact found."
+    record.add_email(email)
+    return "Email added/updated."
+
+@input_error
+def add_address(args, book):
+    name, *address_parts = args
+    address = " ".join(address_parts)
+    record = book.find(name)
+    if record is None:
+        return "No contact found."
+    record.add_address(address)
+    return "Address added/updated"
+
+@input_error
+def search_contact(args, book):
+    if not args:
+        return "Please provide a search query. "
+    query = args[0]
+    results = book.search(query)
+    if not results:
+        return "No matches found."
+    return "\n---\n".join(str(record) for record in results)
+
+@input_error
+def delete_contact(args, book):
+    name = args [0]
+    if book.find(name):
+        book.delete(name)
+        return f"Contact {name} deleted."
+    return "No contact found."
 
 
 @input_error
@@ -324,8 +416,10 @@ def main():
             "note": lambda command_args: delete_note(command_args, notebook),
         },
     }
-    print("Welcome to the assistant bot!")
+    print(f"\n{BLUE}Welcome to the assistant bot!{RESET}")
     while True:
+        print(show_help())
+
         user_input = input("Enter a command: ")
         if not user_input.strip():
             print("Please enter a command.")
