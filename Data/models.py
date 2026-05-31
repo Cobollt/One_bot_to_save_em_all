@@ -57,18 +57,6 @@ class Address(Field):
     pass
 
 
-class Email(Field):
-    def __init__(self, value):
-        pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
-        if not re.match(pattern, value):
-            raise ValueError("Invalid email format.")
-        super().__init__(value)
-
-
-class Address(Field):
-    pass
-
-
 class Record:
     def __init__(self, name):
         self.name = Name(name)

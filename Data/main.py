@@ -409,7 +409,7 @@ def main():
             "contact-notes": lambda command_args: show_contact_notes(command_args, book),
             "phone": lambda command_args: show_phones(command_args, book),
             "birthday": lambda command_args: show_birthday(command_args, book),
-            "birthdays": lambda command_args: birthdays(book),
+            "birthdays": lambda command_args: birthdays(command_args, book),
         },
         "delete": {
             "contact": lambda command_args: delete_contact(command_args, book),
