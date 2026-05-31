@@ -41,6 +41,38 @@ def parse_input(user_input):
     return cmd, *args
 
 
+# ── Help ─────────────────────────────────────────────────────────────────────
+
+def show_help():
+    return f"""
+{GRAY}----------
+Available commands:
+hello                                    - greeting
+add [name] [phone]                       - add contact or phone
+change [name] [old] [new]                - change phone
+phone [name]                             - show phone numbers
+all                                      - show all contacts
+add-birthday [name] [DD.MM.YYYY]         - add birthday
+show-birthday [name]                     - show birthday
+birthdays [days]                         - upcoming birthdays (default: 7 days)
+add-email [name] [email]                 - add or update email
+change-email [name] [email]              - alias for add-email
+add-address [name] [address]             - add or update address
+change-address [name] [address]          - alias for add-address
+search [query]                           - search contacts
+delete [name]                            - delete contact
+add-note [title] [text]                  - add a note
+find-note [query]                        - find notes by query
+edit-note [title] [new text]             - edit an existing note
+delete-note [title]                      - delete a note
+all-notes                                - show all notes
+close or exit                            - exit the program
+----------{RESET}
+"""
+
+
+# ── Decorator ────────────────────────────────────────────────────────────────
+
 def input_error(func):
     def inner(*args, **kwargs):
         try:
@@ -66,6 +98,8 @@ def input_error(func):
             return "Enter a name."
     return inner
 
+
+# ── Command handlers ──────────────────────────────────────────────────────────
 
 @input_error
 def add_contact(args, book):
@@ -130,10 +164,21 @@ def show_birthday(args, book):
 
 
 @input_error
-def birthdays(book):
+def birthdays(args, book):
+    if args:
+        try:
+            days = int(args[0])
+            if days < 1:
+                return "Please enter a positive number of days."
+        except ValueError:
+            return "Invalid number of days. Usage: birthdays [days]"
+    else:
+        days = 7
     result = []
-    for record in book.upcoming_birthdays():
+    for record in book.upcoming_birthdays(days=days):
         result.append(str(record))
+    if not result:
+        return f"No birthdays in the next {days} day(s)."
     return "\n".join(result)
 
 @input_error
@@ -238,8 +283,10 @@ def main():
         "delete-note": lambda command_args: delete_note(command_args, notebook),
         "all-notes": lambda command_args: show_all_notes(notebook),
     }
-    print("Welcome to the assistant bot!")
+    print(f"\n{BLUE}Welcome to the assistant bot!{RESET}")
     while True:
+        print(show_help())
+        
         user_input = input("Enter a command: ")
         if not user_input.strip():
             print("Please enter a command.")

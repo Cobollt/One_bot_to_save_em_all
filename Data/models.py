@@ -119,9 +119,25 @@ class AddressBook(UserDict):
         if name in self.data:
             del self.data[name]
 
-    def upcoming_birthdays(self):
-        today = datetime.today().date()
-        birthdays = []
+    def upcoming_birthdays(self, days=7):
+            """Return records with birthdays within the next `days` days (inclusive)."""
+            today = datetime.today().date()
+            birthdays = []
+            for record in self.data.values():
+                if record.birthday:
+                    birthday = record.birthday.value
+                    next_birthday = birthday.replace(
+                        year=today.year
+                        if birthday.replace(year=today.year) >= today
+                        else today.year + 1
+                    )
+                    if (next_birthday - today).days <= days:
+                        birthdays.append(record)
+            return birthdays
+
+    def search(self, query):
+        query = query.lower()
+        results = []
         for record in self.data.values():
             if record.birthday:
                 birthday = record.birthday.value
