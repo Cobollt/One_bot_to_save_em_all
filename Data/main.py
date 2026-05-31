@@ -1,4 +1,5 @@
 from pathlib import Path
+from difflib import get_close_matches
 import pickle
 from models import Record, AddressBook, NoteBook
 
@@ -79,6 +80,23 @@ all-notes                                - show all notes
 close or exit                            - exit the program
 ----------{RESET}
 """
+
+
+def suggest_command(user_input, commands):
+    available = []
+    for command, value in commands.items():
+        if isinstance(value, dict):
+            for keyword in value:
+                available.append(f"{command} {keyword}")
+        else:
+            available.append(command)
+    matches = get_close_matches(
+        user_input.lower(),
+        available,
+        n=1,
+        cutoff=0.4
+    )
+    return matches[0] if matches else None
 
 
 # ── Decorator ────────────────────────────────────────────────────────────────
@@ -440,8 +458,17 @@ def main():
                 if handler:
                     print(handler(data))
                 else:
-                    print("Invalid keyword.")
-
+                    suggestion = suggest_command(user_input, commands)
+                    if suggestion:
+                        print(f"Did you mean: {suggestion}?")
+                    else:
+                        print("Invalid command.")
+        else:
+            suggestion = suggest_command(user_input, commands)
+            if suggestion:
+                print(f"Did you mean: {suggestion}?")
+            else:
+                print("Invalid command.")
 
 if __name__ == "__main__":
     main()
