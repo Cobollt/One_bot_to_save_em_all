@@ -2,7 +2,7 @@
 
 ## Team
 
-- Rudem
+- Rudem Yusupov
 - Viktor Paranych
 - Mykyta Ihnatenko
 
