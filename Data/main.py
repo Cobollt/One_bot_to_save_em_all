@@ -58,31 +58,41 @@ def show_help():
     return f"""
 {GRAY}----------
 Available commands:
-hello                                    - greeting
-add [name] [phone]                       - add contact or phone
-change [name] [old] [new]                - change phone
-phone [name]                             - show phone numbers
-all                                      - show all contacts
-add-birthday [name] [DD.MM.YYYY]         - add birthday
-show-birthday [name]                     - show birthday
-birthdays [days]                         - upcoming birthdays (default: 7 days)
-add-email [name] [email]                 - add or update email
-change-email [name] [email]              - alias for add-email
-add-address [name] [address]             - add or update address
-change-address [name] [address]          - alias for add-address
-search [query]                           - search contacts
-delete [name]                            - delete contact
-add-note [title] [text]                  - add a note
-find-note [query]                        - find notes by query
-edit-note [title] [new text]             - edit an existing note
-delete-note [title]                      - delete a note
-all-notes                                - show all notes
-close or exit                            - exit the program
+
+add contact [name] [phone]                    - add contact or add phone to existing contact
+add birthday [name] [DD.MM.YYYY]              - add birthday to contact
+add email [name] [email]                      - add or update email
+add address [name] [address]                  - add or update address
+add note [title] [text] #tag                  - add general note
+add contact-note [name] [title] [text] #tag   - add note to contact
+
+change contact [name] [old_phone] [new_phone] - change contact phone
+change email [name] [email]                   - change email
+change address [name] [address]               - change address
+change note [title] [new text]                - edit note
+
+find contact [query]                          - search contacts
+find note [query]                             - search notes
+find tag [tag]                                - search general notes by tag
+find contact-tag [tag]                        - search contact notes by tag
+
+show all                                      - show all contacts
+show phone [query]                            - show phones by search
+show birthday [query]                         - show birthday by search
+show birthdays [days]                         - upcoming birthdays
+show notes                                    - show all general notes
+show contact-notes [query]                    - show contact notes by search
+
+delete contact [name]                         - delete contact
+delete note [title]                           - delete note
+
+close / exit                                  - save and exit
 ----------{RESET}
 """
 
 
 def suggest_command(user_input, commands):
+    parts = user_input.split()
     available = []
     for command, value in commands.items():
         if isinstance(value, dict):
@@ -91,12 +101,26 @@ def suggest_command(user_input, commands):
         else:
             available.append(command)
     matches = get_close_matches(
-        user_input.lower(),
+        " ".join(parts[:2]).lower(),
         available,
         n=1,
         cutoff=0.4
     )
-    return matches[0] if matches else None
+    if not matches:
+        return None
+    if len(parts) > 2:
+        return f"{matches[0]} {' '.join(parts[2:])}"
+    return matches[0]
+
+
+def normalize_command(command, args):
+    if command == "add":
+        if len(args) >= 2 and args[1].isdigit():
+            return command, ["contact"] + args
+    if command in ("find", "search"):
+        if len(args) >= 1:
+            return "find", ["contact"] + args
+    return command, args
 
 
 # ── Decorator ────────────────────────────────────────────────────────────────
@@ -332,43 +356,6 @@ def birthdays(args, book):
         return f"No birthdays in the next {days} day(s)."
     return "\n".join(result)
 
-@input_error
-def add_email(args, book):
-    name, email = args
-    record = book.find(name)
-    if record is None:
-        return "No contact found."
-    record.add_email(email)
-    return "Email added/updated."
-
-@input_error
-def add_address(args, book):
-    name, *address_parts = args
-    address = " ".join(address_parts)
-    record = book.find(name)
-    if record is None:
-        return "No contact found."
-    record.add_address(address)
-    return "Address added/updated"
-
-@input_error
-def search_contact(args, book):
-    if not args:
-        return "Please provide a search query. "
-    query = args[0]
-    results = book.search(query)
-    if not results:
-        return "No matches found."
-    return "\n---\n".join(str(record) for record in results)
-
-@input_error
-def delete_contact(args, book):
-    name = args [0]
-    if book.find(name):
-        book.delete(name)
-        return f"Contact {name} deleted."
-    return "No contact found."
-
 
 @input_error
 def delete_contact(args, book):
@@ -443,6 +430,7 @@ def main():
             print("Please enter a command.")
             continue
         command, *args = parse_input(user_input)
+        command, args = normalize_command(command, args)
         if command in ["close", "exit"]:
             save_data(book)
             save_notes(notebook)
