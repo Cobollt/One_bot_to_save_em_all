@@ -104,7 +104,7 @@ class Record:
         tag = tag.lower()
         return [note for note in self.notes if any(t.lower() == tag for t in note.tags)]
 
-    def all_tags(self):
+    def all_notes(self):
         return self.notes
 
     def __str__(self):
@@ -154,17 +154,25 @@ class AddressBook(UserDict):
             if query in record.name.value.lower():
                 results.append(record)
                 continue
-
             if any(query in p.value for p in record.phones):
                 results.append(record)
                 continue
-
             if record.email and query in record.email.value.lower():
                 results.append(record)
                 continue
             if record.address and query in record.address.value.lower():
                 results.append(record)
                 continue
+            for note in record.notes:
+                if query in note.title.lower():
+                    results.append(record)
+                    break
+                if query in note.text.lower():
+                    results.append(record)
+                    break
+                if any(query == tag.lower() for tag in note.tags):
+                    results.append(record)
+                    break
         return results
 
 
@@ -182,7 +190,10 @@ class NoteBook(UserDict):
         tag = tag.lower()
         return [note for note in self.data.values() if any(t.lower() == tag for t in note.tags)]
 
-    def edit_note(self, new_text):
+    def edit_note(self, title, new_text):
+         if title not in self.data:
+             raise KeyError
+         self.data[title].edit(new_text)
 
     def delete_note(self, title):
         if title not in self.data:

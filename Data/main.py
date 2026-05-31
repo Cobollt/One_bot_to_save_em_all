@@ -216,7 +216,7 @@ def find_contact_note_tag(args, book):
     tag = args[0].lstrip("#")
     result = []
     for record in book.data.values():
-        for note in record.find_notes_by_tag(tag):
+        for note in record.find_by_tags(tag):
             result.append(f"{record.name.value} -> {note}")
     if not result:
         return "No contact notes found."
@@ -234,8 +234,6 @@ def show_contact_notes(args, book):
         return "No notes for this contact."
     return "\n".join(str(note) for note in notes)
 
-
-@input_error
 def split_text_and_tags(parts):
     text_parts = []
     tags = []
@@ -245,18 +243,6 @@ def split_text_and_tags(parts):
         else:
             text_parts.append(part)
     return " ".join(text_parts), tags
-
-
-@input_error
-def split_text_and_tags(parts):
-    text_parts = []
-    tags = []
-    for part in parts:
-        if part.startswith("#"):
-            tags.append(part[1:])
-        else:
-            text_parts.append(part)
-        return " ".join(text_parts), tags
 
 
 @input_error
