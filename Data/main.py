@@ -176,10 +176,21 @@ def delete_contact(args, book):
 
 @input_error
 def add_note(args, notebook):
-    title, *text_parts = args
-    text = " ".join(text_parts)
-    notebook.add_note(title, text)
+    title, *parts = args
+    text, tags = split_text_and_tags(parts)
+    notebook.add_note(title, text, tags)
     return "Note added."
+
+
+@input_error
+def add_contact_note(args, book):
+    name, title, *parts = args
+    record = book.find(name)
+    if record is None:
+        return "No contact."
+    text, tags = split_text_and_tags(parts)
+    record.add_note(title, text, tags)
+    return "Contact note added."
 
 
 @input_error
@@ -189,6 +200,63 @@ def find_note(args, notebook):
     if not notes:
         return "No note found."
     return "\n".join(str(note) for note in notes)
+
+
+@input_error
+def find_note_tag(args, notebook):
+    tag = args[0].lstrip("#")
+    notes = notebook.find_by_tag(tag)
+    if not notes:
+        return "No notes found."
+    return "\n".join(str(note) for note in notes)
+
+
+@input_error
+def find_contact_note_tag(args, book):
+    tag = args[0].lstrip("#")
+    result = []
+    for record in book.data.values():
+        for note in record.find_notes_by_tag(tag):
+            result.append(f"{record.name.value} -> {note}")
+    if not result:
+        return "No contact notes found."
+    return "\n".join(result)
+
+
+@input_error
+def show_contact_notes(args, book):
+    name = args[0]
+    record = book.find(name)
+    if record is None:
+        return "No contact."
+    notes = record.all_notes()
+    if not notes:
+        return "No notes for this contact."
+    return "\n".join(str(note) for note in notes)
+
+
+@input_error
+def split_text_and_tags(parts):
+    text_parts = []
+    tags = []
+    for part in parts:
+        if part.startswith("#"):
+            tags.append(part[1:])
+        else:
+            text_parts.append(part)
+    return " ".join(text_parts), tags
+
+
+@input_error
+def split_text_and_tags(parts):
+    text_parts = []
+    tags = []
+    for part in parts:
+        if part.startswith("#"):
+            tags.append(part[1:])
+        else:
+            text_parts.append(part)
+        return " ".join(text_parts), tags
 
 
 @input_error
@@ -237,6 +305,10 @@ def main():
         "edit-note": lambda command_args: edit_note(command_args, notebook),
         "delete-note": lambda command_args: delete_note(command_args, notebook),
         "all-notes": lambda command_args: show_all_notes(notebook),
+        "add-contact-note": lambda command_args: add_contact_note(command_args, book),
+        "contact-notes": lambda command_args: show_contact_notes(command_args, book),
+        "find-note-tag": lambda command_args: find_note_tag(command_args, notebook),
+        "find-contact-note-tag": lambda command_args: find_contact_note_tag(command_args, book),
     }
     print("Welcome to the assistant bot!")
     while True:
