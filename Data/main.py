@@ -126,6 +126,54 @@ def add_contact(args, book):
 
 
 @input_error
+def add_birthday(args, book):
+    name, birthday, *_ = args
+    record = book.find(name)
+    record.add_birthday(birthday)
+    return "Birthday added."
+
+
+@input_error
+def add_email(args, book):
+    name, email = args
+    record = book.find(name)
+    if record is None:
+        return "No contact found."
+    record.add_email(email)
+    return "Email added/updated."
+
+
+@input_error
+def add_address(args, book):
+    name, *address_parts = args
+    address = " ".join(address_parts)
+    record = book.find(name)
+    if record is None:
+        return "No contact found."
+    record.add_address(address)
+    return "Address added/updated"
+
+
+@input_error
+def add_note(args, notebook):
+    title, *parts = args
+    text, tags = split_text_and_tags(parts)
+    notebook.add_note(title, text, tags)
+    return "Note added."
+
+
+@input_error
+def add_contact_note(args, book):
+    name, title, *parts = args
+    record = book.find(name)
+    if record is None:
+        return "No contact."
+    text, tags = split_text_and_tags(parts)
+    record.add_note(title, text, tags)
+    return "Contact note added."
+
+
+@input_error
 def change_contact(args, book):
     name, old_number, new_numbers = args
     record = book.find(name)
@@ -136,12 +184,65 @@ def change_contact(args, book):
 
 
 @input_error
+def edit_note(args, notebook):
+    title, *text_parts = args
+    new_text = " ".join(text_parts)
+    notebook.edit_note(title, new_text)
+    return "Note edited."
+
+
+@input_error
+def find_note(args, notebook):
+    query = " ".join(args)
+    notes = notebook.find_note(query)
+    if not notes:
+        return "No note found."
+    return "\n".join(str(note) for note in notes)
+
+
+@input_error
+def find_note_tag(args, notebook):
+    tag = args[0].lstrip("#")
+    notes = notebook.find_by_tag(tag)
+    if not notes:
+        return "No notes found."
+    return "\n".join(str(note) for note in notes)
+
+
+@input_error
+def search_contact_note_tag(args, book):
+    tag = args[0].lstrip("#").lower()
+    results = []
+    for record in book.search(tag):
+        for note in record.notes:
+            if any(t.lower() == tag for t in note.tags):
+                results.append(
+                    f"{record.name.value} -> {note}"
+                )
+    if not results:
+        return "No contact notes found."
+    return "\n".join(results)
+
+
+@input_error
+def search_contact(args, book):
+    query = " ".join(args)
+    results = book.search(query)
+    if not results:
+        return "No matches found."
+    return "\n".join(str(record) for record in results)
+
+
+@input_error
 def show_phones(args, book):
-    name = args[0]
-    record = book.find(name)
-    if record is None:
+    query = " ".join(args)
+    results = book.search(query)
+    if not results:
         return "No contact."
-    return "; ".join(phone.value for phone in record.phones)
+    return "\n".join(
+        f"{record.name.value}: {'; '.join(phone.value for phone in record.phones)}"
+        for record in results
+    )
 
 
 @input_error
@@ -155,22 +256,44 @@ def show_all(book):
 
 
 @input_error
-def add_birthday(args, book):
-    name, birthday, *_ = args
-    record = book.find(name)
-    record.add_birthday(birthday)
-    return "Birthday added."
+def show_birthday(args, book):
+    query = " ".join(args)
+    results = book.search(query)
+    if not results:
+        return "No contact."
+    output = []
+    for record in results:
+        birthday = (
+            record.birthday.value
+            if record.birthday
+            else "Birthday not found."
+        )
+        output.append(f"{record.name.value}: {birthday}")
+    return "\n".join(output)
 
 
 @input_error
-def show_birthday(args, book):
-    name = args[0]
-    record = book.find(name)
-    if record is None:
+def show_contact_notes(args, book):
+    query = " ".join(args)
+    results = book.search(query)
+    if not results:
         return "No contact."
-    if record.birthday is None:
-        return "Birthday not found."
-    return record.birthday.value
+    output = []
+    for record in results:
+        if record.notes:
+            output.append(f"\n{record.name.value}:")
+            output.extend(str(note) for note in record.notes)
+    if not output:
+        return "No notes found."
+    return "\n".join(output)
+
+
+@input_error
+def show_all_notes(notebook):
+    notes = notebook.all_notes()
+    if not notes:
+        return "Notebook is empty."
+    return "\n".join(str(note) for note in notes)
 
 
 @input_error
@@ -230,28 +353,12 @@ def delete_contact(args, book):
 
 
 @input_error
-def add_note(args, notebook):
-    title, *text_parts = args
-    text = " ".join(text_parts)
-    notebook.add_note(title, text)
-    return "Note added."
-
-
-@input_error
-def find_note(args, notebook):
-    query = " ".join(args)
-    notes = notebook.find_note(query)
-    if not notes:
-        return "No note found."
-    return "\n".join(str(note) for note in notes)
-
-
-@input_error
-def edit_note(args, notebook):
-    title, *text_parts = args
-    new_text = " ".join(text_parts)
-    notebook.edit_note(title, new_text)
-    return "Note edited."
+def delete_contact(args, book):
+    name = args [0]
+    if book.find(name):
+        book.delete(name)
+        return f"Contact {name} deleted."
+    return "No contact found."
 
 
 @input_error
@@ -261,42 +368,58 @@ def delete_note(args, notebook):
     return "Note deleted."
 
 
-@input_error
-def show_all_notes(notebook):
-    notes = notebook.all_notes()
-    if not notes:
-        return "Notebook is empty."
-    return "\n".join(str(note) for note in notes)
+def split_text_and_tags(parts):
+    text_parts = []
+    tags = []
+    for part in parts:
+        if part.startswith("#"):
+            tags.append(part[1:])
+        else:
+            text_parts.append(part)
+    return " ".join(text_parts), tags
 
 
 def main():
     book = load_data()
     notebook = load_notes()
     commands = {
-        "hello": lambda command_args: "How can I help you?",
-        "add": lambda command_args: add_contact(command_args, book),
-        "change": lambda command_args: change_contact(command_args, book),
-        "phone": lambda command_args: show_phones(command_args, book),
-        "all": lambda command_args: show_all(book),
-        "add-birthday": lambda command_args: add_birthday(command_args, book),
-        "show-birthday": lambda command_args: show_birthday(command_args, book),
-        "birthdays": lambda command_args: birthdays(command_args, book),
-        "add-email": lambda command_args: add_email(command_args, book),
-        "change-email": lambda command_args: add_email(command_args, book),
-        "change-address": lambda command_args: add_address(command_args, book),
-        "add-address": lambda command_args: add_address(command_args, book),
-        "search": lambda command_args: search_contact(command_args, book),
-        "delete": lambda command_args: delete_contact(command_args, book),
-        "add-note": lambda command_args: add_note(command_args, notebook),
-        "find-note": lambda command_args: find_note(command_args, notebook),
-        "edit-note": lambda command_args: edit_note(command_args, notebook),
-        "delete-note": lambda command_args: delete_note(command_args, notebook),
-        "all-notes": lambda command_args: show_all_notes(notebook),
+        "add": {
+            "contact": lambda command_args: add_contact(command_args, book),
+            "note": lambda command_args: add_note(command_args, notebook),
+            "contact-note": lambda command_args: add_contact_note(command_args, book),
+            "birthday": lambda command_args: add_birthday(command_args, book),
+            "email": lambda command_args: add_email(command_args, book),
+            "address": lambda command_args: add_address(command_args, book),
+        },
+        "change": {
+            "contact": lambda command_args: change_contact(command_args, book),
+            "email": lambda command_args: add_email(command_args, book),
+            "address": lambda command_args: add_address(command_args, book),
+            "note": lambda command_args: edit_note(command_args, notebook),
+        },
+        "find": {
+            "contact": lambda command_args: search_contact(command_args, book),
+            "note": lambda command_args: find_note(command_args, notebook),
+            "tag": lambda command_args: find_note_tag(command_args, notebook),
+            "contact-tag": lambda command_args: search_contact_note_tag(command_args, book),
+        },
+        "show": {
+            "all": lambda command_args: show_all(book),
+            "notes": lambda command_args: show_all_notes(notebook),
+            "contact-notes": lambda command_args: show_contact_notes(command_args, book),
+            "phone": lambda command_args: show_phones(command_args, book),
+            "birthday": lambda command_args: show_birthday(command_args, book),
+            "birthdays": lambda command_args: birthdays(command_args, book),
+        },
+        "delete": {
+            "contact": lambda command_args: delete_contact(command_args, book),
+            "note": lambda command_args: delete_note(command_args, notebook),
+        },
     }
     print(f"\n{BLUE}Welcome to the assistant bot!{RESET}")
     while True:
         print(show_help())
-        
+
         user_input = input("Enter a command: ")
         if not user_input.strip():
             print("Please enter a command.")
@@ -307,11 +430,17 @@ def main():
             save_notes(notebook)
             print("Good bye!")
             break
-        handler = commands.get(command)
-        if handler:
-            print(handler(args))
-        else:
-            print("Invalid command.")
+        if command in commands:
+            if isinstance(commands[command], dict):
+                if not args:
+                    print("Enter keyword.")
+                    continue
+                keyword, *data = args
+                handler = commands[command].get(keyword)
+                if handler:
+                    print(handler(data))
+                else:
+                    print("Invalid keyword.")
 
 
 if __name__ == "__main__":
