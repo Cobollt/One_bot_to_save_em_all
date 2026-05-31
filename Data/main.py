@@ -1,14 +1,6 @@
 from pathlib import Path
 import pickle
-from models import Record, AddressBook, NoteBook
-
-
-# Colors
-RED = "\033[91m"
-GREEN = "\033[92m"
-GRAY = "\033[90m"
-BLUE = "\033[94m"
-RESET = "\033[0m"
+from .models import Record, AddressBook, NoteBook
 
 
 DATA_DIR = Path("SaveData")
@@ -42,8 +34,6 @@ def load_notes(filename=NOTES_FILE):
     except FileNotFoundError:
         return NoteBook()
 
-
-# ── Parser ───────────────────────────────────────────────────────────────────
 
 def parse_input(user_input):
     cmd, *args = user_input.split()
@@ -280,7 +270,7 @@ def main():
         "all": lambda command_args: show_all(book),
         "add-birthday": lambda command_args: add_birthday(command_args, book),
         "show-birthday": lambda command_args: show_birthday(command_args, book),
-        "birthdays": lambda command_args: birthdays(command_args, book),
+        "birthdays": lambda command_args: birthdays(book),
         "add-email": lambda command_args: add_email(command_args, book),
         "change-email": lambda command_args: add_email(command_args, book),
         "change-address": lambda command_args: add_address(command_args, book),
