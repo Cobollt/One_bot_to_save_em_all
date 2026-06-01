@@ -133,8 +133,10 @@ def normalize_command(command, args):
         if len(args) >= 2 and args[1].isdigit():
             return command, ["contact"] + args
     if command in ("find", "search"):
-        if len(args) >= 1:
+        search_keywords = ("contact", "note", "tag", "contact-tag")
+        if args and args[0] not in search_keywords:
             return "find", ["contact"] + args
+        return "find", args
     return command, args
 
 
