@@ -264,7 +264,7 @@ def find_note_tag(args, notebook):
 def search_contact_note_tag(args, book):
     tag = args[0].lstrip("#").lower()
     results = []
-    for record in book.search(tag):
+    for record in book.data.values():
         for note in record.notes:
             if any(t.lower() == tag for t in note.tags):
                 results.append(
@@ -435,40 +435,42 @@ def main():
     while True:
         user_input = input("Enter a command: ")
         if not user_input.strip():
-            print("Please enter a command.")
+            print(f"{RED}Please enter a command.{RESET}")
             continue
         command, *args = parse_input(user_input)
         command, args = normalize_command(command, args)
         if command in ["close", "exit"]:
             save_data(book)
             save_notes(notebook)
-            print("Good bye!")
+            print(f"{BLUE}Good bye!{RESET}")
             break
         if command in commands:
             handler = commands[command]
             if isinstance(handler, dict):
                 if not args:
-                    print("Enter keyword.")
+                    print(f"{RED}Enter keyword.{RESET}")
                     continue
                 keyword, *data = args
                 sub_handler = handler.get(keyword)
                 if sub_handler:
-                    print(sub_handler(data))
+                    result = sub_handler(data)
+                    print(f"{GREEN}{result}{RESET}")
                 else:
                     suggestion = suggest_command(user_input, commands)
                     if suggestion:
                         print(f"Did you mean: {suggestion}?")
                     else:
-                        print("Invalid keyword.")
+                        print(f"{RED}Invalid keyword.{RESET}")
             else:
-                print(handler(args))
+                result = handler(args)
+                print(f"{GREEN}{result}{RESET}")
         else:
             suggestion = suggest_command(user_input, commands)
 
             if suggestion:
                 print(f"Did you mean: {suggestion}?")
             else:
-                print("Invalid command.")
+                print(f"{RED}Invalid command.{RESET}")
 
 
 if __name__ == "__main__":
