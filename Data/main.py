@@ -1,16 +1,17 @@
 import pickle
 from pathlib import Path
 from difflib import get_close_matches
+from colorama import Fore, init
 
 from .models import Record, AddressBook, NoteBook
 
 
+init(autoreset=True)
 # Colors
-RED = "\033[91m"
-GREEN = "\033[92m"
-GRAY = "\033[90m"
-BLUE = "\033[94m"
-RESET = "\033[0m"
+RED = Fore.RED
+GREEN = Fore.GREEN
+GRAY = Fore.LIGHTBLACK_EX
+BLUE = Fore.BLUE
 
 
 DATA_DIR = Path("SaveData")
@@ -102,7 +103,7 @@ delete contact-note [name] [title]            - delete contact note
 
 help                                          - show this help
 close / exit                                  - save and exit
-----------{RESET}
+----------
 """
 
 
@@ -511,54 +512,54 @@ def main():
             "phone": lambda command_args: delete_phone(command_args, book),
         },
     }
-    print(f"\n{BLUE}Welcome to the assistant bot!{RESET}")
+    print(f"\n{BLUE}Welcome to the assistant bot!")
     while True:
         user_input = input("Enter a command: ")
         if not user_input.strip():
-            print(f"{RED}Please enter a command.{RESET}")
+            print(f"{RED}Please enter a command.")
             continue
         command, *args = parse_input(user_input)
         command, args = normalize_command(command, args)
         if command in ["close", "exit"]:
             save_data(book)
             save_notes(notebook)
-            print(f"{BLUE}Good bye!{RESET}")
+            print(f"{BLUE}Good bye!")
             break
         if command in commands:
             handler = commands[command]
             if isinstance(handler, dict):
                 if not args:
-                    print(f"{RED}Enter keyword.{RESET}")
+                    print(f"{RED}Enter keyword.")
                     continue
                 keyword, *data = args
                 sub_handler = handler.get(keyword)
                 if sub_handler:
                     result = sub_handler(data)
                     if is_error_message(result):
-                        print(f"{RED}{result}{RESET}")
+                        print(f"{RED}{result}")
                     else:
-                        print(f"{GREEN}{result}{RESET}")
+                        print(f"{GREEN}{result}")
                 else:
                     suggestion = suggest_command(user_input, commands)
                     if suggestion:
                         print(f"Did you mean: {suggestion}?")
                     else:
-                        print(f"{RED}Invalid keyword.{RESET}")
+                        print(f"{RED}Invalid keyword.")
             else:
                 result = handler(args)
                 if command == "help":
                     print(result)
                 elif is_error_message(result):
-                    print(f"{RED}{result}{RESET}")
+                    print(f"{RED}{result}")
                 else:
-                    print(f"{GREEN}{result}{RESET}")
+                    print(f"{GREEN}{result}")
         else:
             suggestion = suggest_command(user_input, commands)
 
             if suggestion:
                 print(f"Did you mean: {suggestion}?")
             else:
-                print(f"{RED}Invalid command.{RESET}")
+                print(f"{RED}Invalid command.")
 
 
 if __name__ == "__main__":
