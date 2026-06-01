@@ -111,6 +111,33 @@ class Record:
     def all_notes(self):
         return self.notes
 
+    def delete_email(self):
+        self.email = None
+
+    def delete_address(self):
+        self.address = None
+
+    def delete_phone(self, phone):
+        if self.find_phone(phone) is None:
+            raise ValueError("Phone not found")
+        if len(self.phones) <= 1:
+            raise ValueError("Cannot delete the only phone number.")
+        self.remove_phone(phone)
+
+    def delete_note(self, title):
+        for note in self.notes:
+            if note.title == title:
+                self.notes.remove(note)
+                return
+        raise KeyError
+
+    def edit_note(self, title, new_text):
+        for note in self.notes:
+            if note.title == title:
+                note.edit(new_text)
+                return
+        raise KeyError
+
     def __str__(self):
         birthday = self.birthday.value if self.birthday else "not added"
         email_obj = getattr(self, "email", None)

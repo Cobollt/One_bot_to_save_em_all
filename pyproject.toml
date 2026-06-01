@@ -7,9 +7,9 @@ name = "One_bot_to_save_em_all"
 version = "1.0.0"
 description = "Console assistant bot"
 authors = [
-    "Rudem yusupov",
-    "Viktor Paranych",
-    "Mykyta Ihnatenko"
+    {name = "Rudem yusupov"},
+    {name = "Viktor Paranych"},
+    {name = "Mykyta Ihnatenko"}
 ]
 readme = "README.md"
 requires-python = ">=3.10"

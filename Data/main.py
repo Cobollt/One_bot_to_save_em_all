@@ -274,7 +274,6 @@ def search_contact_note_tag(args, book):
         return "No contact notes found."
     return "\n".join(results)
 
-
 @input_error
 def search_contact(args, book):
     query = " ".join(args)
@@ -382,6 +381,57 @@ def delete_note(args, notebook):
     return "Note deleted."
 
 
+@input_error
+def delete_email(args, book):
+    name = args[0]
+    record = book.find(name)
+    if record is None:
+        return "No contact."
+    record.delete_email()
+    return "Email deleted."
+
+
+@input_error
+def delete_address(args, book):
+    name = args[0]
+    record = book.find(name)
+    if record is None:
+        return "No contact."
+    record.delete_address()
+    return "Address deleted."
+
+
+@input_error
+def delete_phone(args, book):
+    name, phone = args
+    record = book.find(name)
+    if record is None:
+        return "No contact."
+    record.delete_phone(phone)
+    return "Phone deleted."
+
+
+@input_error
+def delete_contact_note(args, book):
+    name, title = args
+    record = book.find(name)
+    if record is None:
+        return "No contact."
+    record.delete_note(title)
+    return "Contact note deleted."
+
+
+@input_error
+def change_contact_note(args, book):
+    name, title, *text_parts = args
+    record = book.find(name)
+    if record is None:
+        return "No contact."
+    new_text = " ".join(text_parts)
+    record.edit_note(title, new_text)
+    return "Contact note changed."
+
+
 def split_text_and_tags(parts):
     text_parts = []
     tags = []
@@ -411,6 +461,7 @@ def main():
             "email": lambda command_args: add_email(command_args, book),
             "address": lambda command_args: add_address(command_args, book),
             "note": lambda command_args: edit_note(command_args, notebook),
+            "contact-note": lambda command_args: change_contact_note(command_args, book),
         },
         "find": {
             "contact": lambda command_args: search_contact(command_args, book),
@@ -429,6 +480,10 @@ def main():
         "delete": {
             "contact": lambda command_args: delete_contact(command_args, book),
             "note": lambda command_args: delete_note(command_args, notebook),
+            "contact-note": lambda command_args: delete_contact_note(command_args, book),
+            "email": lambda command_args: delete_email(command_args, book),
+            "address": lambda command_args: delete_address(command_args, book),
+            "phone": lambda command_args: delete_phone(command_args, book),
         },
     }
     print(f"\n{BLUE}Welcome to the assistant bot!{RESET}")
