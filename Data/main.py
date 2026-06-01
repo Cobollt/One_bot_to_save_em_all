@@ -2,7 +2,7 @@ import pickle
 from pathlib import Path
 from difflib import get_close_matches
 
-from models import Record, AddressBook, NoteBook
+from .models import Record, AddressBook, NoteBook
 
 
 # Colors

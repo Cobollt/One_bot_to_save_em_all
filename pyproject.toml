@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "One_bot_to_save_em_all"
-version = "0.0.1"
+version = "1.0.0"
 description = "Console assistant bot"
 authors = [
     {name = "Your Name"}
