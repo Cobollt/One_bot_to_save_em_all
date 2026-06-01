@@ -32,7 +32,15 @@ def save_notes(notes, filename=NOTES_FILE):
 def load_data(filename=DATA_FILE):
     try:
         with open(filename, "rb") as file:
-            return pickle.load(file)
+            book = pickle.load(file)
+        for record in book.data.values():
+            if not hasattr(record, "email"):
+                record.email = None
+            if not hasattr(record, "address"):
+                record.address = None
+            if not hasattr(record, "notes"):
+                record.notes = []
+        return book
     except FileNotFoundError:
         return AddressBook()
 

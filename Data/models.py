@@ -113,9 +113,11 @@ class Record:
 
     def __str__(self):
         birthday = self.birthday.value if self.birthday else "not added"
-        email = self.email.value if self.email else "not added"
-        address = self.address.value if self.address else "not added"
-        phones = '; '.join(p.value for p in self.phones) if self.phones else "none"
+        email_obj = getattr(self, "email", None)
+        address_obj = getattr(self, "address", None)
+        email = email_obj.value if email_obj else "not added"
+        address = address_obj.value if address_obj else "not added"
+        phones = "; ".join(p.value for p in self.phones) if self.phones else "none"
         return (
             f"Contact name: {self.name.value}, "
             f"phones: {phones}, "
