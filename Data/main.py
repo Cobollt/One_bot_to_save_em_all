@@ -68,33 +68,39 @@ def show_help():
 {GRAY}----------
 Available commands:
 
-add contact [name] [phone]                    - add contact or add phone to existing contact
-add birthday [name] [DD.MM.YYYY]              - add birthday to contact
+add contact [name] [phone]                    - add contact or add phone
+add birthday [name] [DD.MM.YYYY]              - add birthday
 add email [name] [email]                      - add or update email
 add address [name] [address]                  - add or update address
 add note [title] [text] #tag                  - add general note
 add contact-note [name] [title] [text] #tag   - add note to contact
 
-change contact [name] [old_phone] [new_phone] - change contact phone
+change contact [name] [old_phone] [new_phone] - change phone
 change email [name] [email]                   - change email
 change address [name] [address]               - change address
-change note [title] [new text]                - edit note
+change note [title] [new text]                - edit general note
+change contact-note [name] [title] [new text] - edit contact note
 
-find contact [query]                          - search contacts
-find note [query]                             - search notes
+find contact [name]                          - search contacts
+find note [title]                             - search general notes
 find tag [tag]                                - search general notes by tag
 find contact-tag [tag]                        - search contact notes by tag
 
 show all                                      - show all contacts
-show phone [query]                            - show phones by search
-show birthday [query]                         - show birthday by search
+show phone [name]                            - show phones
+show birthday [name]                         - show birthday
 show birthdays [days]                         - upcoming birthdays
 show notes                                    - show all general notes
-show contact-notes [query]                    - show contact notes by search
+show contact-notes [name]                    - show contact notes
 
 delete contact [name]                         - delete contact
-delete note [title]                           - delete note
+delete note [title]                           - delete general note
+delete email [name]                           - delete contact email
+delete address [name]                         - delete contact address
+delete phone [name] [phone]                   - delete phone if more than one exists
+delete contact-note [name] [title]            - delete contact note
 
+help                                          - show this help
 close / exit                                  - save and exit
 ----------{RESET}
 """
@@ -443,6 +449,24 @@ def split_text_and_tags(parts):
     return " ".join(text_parts), tags
 
 
+def is_error_message(message):
+    errors = (
+        "No contact",
+        "No contact found",
+        "No note found",
+        "No notes found",
+        "Note not found",
+        "Phone not found",
+        "Cannot delete",
+        "Invalid",
+        "Enter",
+        "Give me",
+        "Address book is empty",
+        "Notebook is empty",
+    )
+    return isinstance(message, str) and message.startswith(errors)
+
+
 def main():
     book = load_data()
     notebook = load_notes()
@@ -509,7 +533,10 @@ def main():
                 sub_handler = handler.get(keyword)
                 if sub_handler:
                     result = sub_handler(data)
-                    print(f"{GREEN}{result}{RESET}")
+                    if is_error_message(result):
+                        print(f"{RED}{result}{RESET}")
+                    else:
+                        print(f"{GREEN}{result}{RESET}")
                 else:
                     suggestion = suggest_command(user_input, commands)
                     if suggestion:
@@ -518,7 +545,12 @@ def main():
                         print(f"{RED}Invalid keyword.{RESET}")
             else:
                 result = handler(args)
-                print(f"{GREEN}{result}{RESET}")
+                if command == "help":
+                    print(result)
+                elif is_error_message(result):
+                    print(f"{RED}{result}{RESET}")
+                else:
+                    print(f"{GREEN}{result}{RESET}")
         else:
             suggestion = suggest_command(user_input, commands)
 
