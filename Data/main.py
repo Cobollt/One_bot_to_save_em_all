@@ -389,6 +389,7 @@ def main():
     book = load_data()
     notebook = load_notes()
     commands = {
+        "help": lambda command_args: show_help(),
         "add": {
             "contact": lambda command_args: add_contact(command_args, book),
             "note": lambda command_args: add_note(command_args, notebook),
@@ -424,8 +425,6 @@ def main():
     }
     print(f"\n{BLUE}Welcome to the assistant bot!{RESET}")
     while True:
-        print(show_help())
-
         user_input = input("Enter a command: ")
         if not user_input.strip():
             print("Please enter a command.")
@@ -438,22 +437,26 @@ def main():
             print("Good bye!")
             break
         if command in commands:
-            if isinstance(commands[command], dict):
+            handler = commands[command]
+            if isinstance(handler, dict):
                 if not args:
                     print("Enter keyword.")
                     continue
                 keyword, *data = args
-                handler = commands[command].get(keyword)
-                if handler:
-                    print(handler(data))
+                sub_handler = handler.get(keyword)
+                if sub_handler:
+                    print(sub_handler(data))
                 else:
                     suggestion = suggest_command(user_input, commands)
                     if suggestion:
                         print(f"Did you mean: {suggestion}?")
                     else:
-                        print("Invalid command.")
+                        print("Invalid keyword.")
+            else:
+                print(handler(args))
         else:
             suggestion = suggest_command(user_input, commands)
+
             if suggestion:
                 print(f"Did you mean: {suggestion}?")
             else:
