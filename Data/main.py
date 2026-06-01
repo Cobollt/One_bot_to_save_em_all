@@ -244,9 +244,9 @@ def change_contact(args, book):
 
 @input_error
 def edit_note(args, notebook):
-    title, *text_parts = args
-    new_text = " ".join(text_parts)
-    notebook.edit_note(title, new_text)
+    title, *parts = args
+    new_text, tags = split_text_and_tags(parts)
+    notebook.edit_note(title, new_text, tags)
     return "Note edited."
 
 
@@ -420,13 +420,14 @@ def delete_phone(args, book):
 
 
 @input_error
-def delete_contact_note(args, book):
-    name, title = args
+def change_contact_note(args, book):
+    name, title, *parts = args
     record = book.find(name)
     if record is None:
         return "No contact."
-    record.delete_note(title)
-    return "Contact note deleted."
+    new_text, tags = split_text_and_tags(parts)
+    record.edit_note(title, new_text, tags)
+    return "Contact note changed."
 
 
 @input_error

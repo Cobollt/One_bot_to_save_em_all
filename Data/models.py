@@ -37,8 +37,9 @@ class Note:
         self.text = text
         self.tags = tags if tags else []
 
-    def edit(self, new_text):
+    def edit(self, new_text, tags=None):
         self.text = new_text
+        self.tags = tags if tags else []
 
     def matches(self, query):
         query = query.lower()
@@ -131,10 +132,10 @@ class Record:
                 return
         raise KeyError
 
-    def edit_note(self, title, new_text):
+    def edit_note(self, title, new_text, tags=None):
         for note in self.notes:
             if note.title == title:
-                note.edit(new_text)
+                note.edit(new_text, tags)
                 return
         raise KeyError
 
@@ -212,10 +213,10 @@ class NoteBook(UserDict):
             if note.matches(query)
         ]
 
-    def edit_note(self, title, new_text):
+    def edit_note(self, title, new_text, tags=None):
         if title not in self.data:
             raise KeyError
-        self.data[title].edit(new_text)
+        self.data[title].edit(new_text, tags)
 
     def delete_note(self, title):
         if title not in self.data:
