@@ -1,6 +1,7 @@
+import pickle
 from pathlib import Path
 from difflib import get_close_matches
-import pickle
+
 from models import Record, AddressBook, NoteBook
 
 
@@ -245,7 +246,7 @@ def find_note(args, notebook):
 @input_error
 def find_note_tag(args, notebook):
     tag = args[0].lstrip("#")
-    notes = notebook.find_by_tag(tag)
+    notes = notebook.find_note(tag)
     if not notes:
         return "No notes found."
     return "\n".join(str(note) for note in notes)
@@ -359,7 +360,7 @@ def birthdays(args, book):
 
 @input_error
 def delete_contact(args, book):
-    name = args [0]
+    name = args[0]
     if book.find(name):
         book.delete(name)
         return f"Contact {name} deleted."
@@ -457,6 +458,7 @@ def main():
                 print(f"Did you mean: {suggestion}?")
             else:
                 print("Invalid command.")
+
 
 if __name__ == "__main__":
     main()

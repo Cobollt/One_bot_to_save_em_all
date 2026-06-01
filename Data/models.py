@@ -40,6 +40,14 @@ class Note:
     def edit(self, new_text):
         self.text = new_text
 
+    def matches(self, query):
+        query = query.lower()
+        return (
+            query in self.title.lower()
+            or query in self.text.lower()
+            or any(query == tag.lower() for tag in self.tags)
+        )
+
     def __str__(self):
         tags = ", ".join(self.tags) if self.tags else "no tags"
         return f"{self.title}: {self.text} | tags: {tags}"
@@ -100,10 +108,6 @@ class Record:
     def add_note(self, title, text, tags=None):
         self.notes.append(Note(title, text, tags))
 
-    def find_by_tags(self, tag):
-        tag = tag.lower()
-        return [note for note in self.notes if any(t.lower() == tag for t in note.tags)]
-
     def all_notes(self):
         return self.notes
 
@@ -133,20 +137,19 @@ class AddressBook(UserDict):
             del self.data[name]
 
     def upcoming_birthdays(self, days=7):
-            """Return records with birthdays within the next `days` days (inclusive)."""
-            today = datetime.today().date()
-            birthdays = []
-            for record in self.data.values():
-                if record.birthday:
-                    birthday = record.birthday.value
-                    next_birthday = birthday.replace(
-                        year=today.year
-                        if birthday.replace(year=today.year) >= today
-                        else today.year + 1
-                    )
-                    if (next_birthday - today).days <= days:
-                        birthdays.append(record)
-            return birthdays
+        today = datetime.today().date()
+        birthdays = []
+        for record in self.data.values():
+            if record.birthday:
+                birthday = record.birthday.value
+                next_birthday = birthday.replace(
+                    year=today.year
+                    if birthday.replace(year=today.year) >= today
+                    else today.year + 1
+                )
+                if (next_birthday - today).days <= days:
+                    birthdays.append(record)
+        return birthdays
 
     def search(self, query):
         query = query.lower()
@@ -164,37 +167,26 @@ class AddressBook(UserDict):
             if record.address and query in record.address.value.lower():
                 results.append(record)
                 continue
-            for note in record.notes:
-                if query in note.title.lower():
-                    results.append(record)
-                    break
-                if query in note.text.lower():
-                    results.append(record)
-                    break
-                if any(query == tag.lower() for tag in note.tags):
-                    results.append(record)
-                    break
+            if any(note.matches(query) for note in record.notes):
+                results.append(record)
+                continue
         return results
 
 
 class NoteBook(UserDict):
-
     def add_note(self, title, text, tags=None):
         self.data[title] = Note(title, text, tags)
 
     def find_note(self, query):
-        query = query.lower()
-        return [note for note in self.data.values()
-                if query in note.title.lower() or query in note.text.lower()]
-
-    def find_by_tag(self, tag):
-        tag = tag.lower()
-        return [note for note in self.data.values() if any(t.lower() == tag for t in note.tags)]
+        return [
+            note for note in self.data.values()
+            if note.matches(query)
+        ]
 
     def edit_note(self, title, new_text):
-         if title not in self.data:
-             raise KeyError
-         self.data[title].edit(new_text)
+        if title not in self.data:
+            raise KeyError
+        self.data[title].edit(new_text)
 
     def delete_note(self, title):
         if title not in self.data:
